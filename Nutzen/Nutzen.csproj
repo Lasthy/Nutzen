@@ -1,0 +1,62 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
+    <PackageReference Include="System.Text.Json" Version="6.0.11" Condition="'$(TargetFramework)' == 'netstandard2.0'" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>disable</ImplicitUsings>
+    
+    <!-- NuGet Package Metadata -->
+    <PackageId>Nutzen</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Lasthy</Authors>
+    <Description>A lightweight library for implementing the Unit of Work pattern with request/response handling, including Roslyn analyzers for compile-time validation.</Description>
+    <PackageTags>unit-of-work;cqrs;request;handler;dispatcher;analyzers</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryType>git</RepositoryType>
+    
+    <!-- Package Generation -->
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageOutputPath>C:\Dev\.nuget</PackageOutputPath>
+    
+    <!-- Include analyzers in package -->
+    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);_AddAnalyzersToPackage</TargetsForTfmSpecificContentInPackage>
+  </PropertyGroup>
+
+  <!-- Project References for Analyzers (not as library dependencies) -->
+  <ItemGroup>
+    <ProjectReference Include="..\Analyzers\Nutzen.Analyzers.UnitOfWork\Nutzen.Analyzers.UnitOfWork\Nutzen.Analyzers.UnitOfWork.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <OutputItemType>Analyzer</OutputItemType>
+    </ProjectReference>
+    <ProjectReference Include="..\Analyzers\Nutzen.Analyzers.UnitOfWork\Nutzen.Analyzers.UnitOfWork.CodeFixes\Nutzen.Analyzers.UnitOfWork.CodeFixes.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <OutputItemType>Analyzer</OutputItemType>
+    </ProjectReference>
+    <ProjectReference Include="..\Generators\Nutzen.Generators.ServiceRegistration\Nutzen.Generators.ServiceRegistration.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <OutputItemType>Analyzer</OutputItemType>
+    </ProjectReference>
+  </ItemGroup>
+
+  <!-- Include README in package -->
+
+  <!-- Target to include analyzers in the NuGet package -->
+  <Target Name="_AddAnalyzersToPackage">
+    <ItemGroup>
+      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\Analyzers\Nutzen.Analyzers.UnitOfWork\Nutzen.Analyzers.UnitOfWork\bin\$(Configuration)\netstandard2.0\Nutzen.Analyzers.UnitOfWork.dll" PackagePath="analyzers/dotnet/cs" />
+      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\Analyzers\Nutzen.Analyzers.UnitOfWork\Nutzen.Analyzers.UnitOfWork.CodeFixes\bin\$(Configuration)\netstandard2.0\Nutzen.Analyzers.UnitOfWork.CodeFixes.dll" PackagePath="analyzers/dotnet/cs" />
+      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\Generators\Nutzen.Generators.ServiceRegistration\bin\$(Configuration)\netstandard2.0\Nutzen.Generators.ServiceRegistration.dll" PackagePath="analyzers/dotnet/cs" />
+    </ItemGroup>
+  </Target>
+
+</Project>
