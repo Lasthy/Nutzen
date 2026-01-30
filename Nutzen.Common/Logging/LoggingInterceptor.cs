@@ -31,7 +31,8 @@ public class LoggingInterceptor<TRequest, TResponse> : IRequestInterceptor<TRequ
         TRequest request, 
         Func<TRequest, Task<Result<TResponse>>> next)
     {
-        var requestName = typeof(TRequest).Name;
+        var requestType = typeof(TRequest);
+        var requestName = $"{(requestType.DeclaringType?.Name ?? "")}.{requestType.Name}";
         var requestId = request.Id;
         
         _logger.LogInformation("[{RequestId}] Starting request '{RequestName}'", requestId, requestName);

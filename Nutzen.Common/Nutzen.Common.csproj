@@ -1,13 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
 
     <!-- NuGet Package Metadata -->
-    <PackageId>Nutzen</PackageId>
-    <Version>0.1.0</Version>
+    <PackageId>Nutzen.Common</PackageId>
+    <Version>0.0.3</Version>
     <Authors>Lasthy</Authors>
     <Description>A lightweight library for implementing the Unit of Work pattern with request/response handling, including Roslyn analyzers for compile-time validation.</Description>
     <PackageTags>unit-of-work;cqrs;request;handler;dispatcher;analyzers</PackageTags>
@@ -17,8 +16,6 @@
     
     <!-- Package Generation -->
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <IncludeSymbols>true</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageOutputPath>C:\Dev\.nuget</PackageOutputPath>
   </PropertyGroup>
 
@@ -45,6 +42,11 @@
     <ProjectReference Include="..\Generators\Nutzen.Generators.ServiceRegistration\Nutzen.Generators.ServiceRegistration.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <!-- Include README in package -->
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>

@@ -22,7 +22,10 @@ public record Request<TResponse> : IRequest<TResponse>
     public string Id { get; } = Guid.NewGuid().ToString();
 }
 
-public record Request : Request<Empty>;
+public record Request : IRequest
+{
+    public string Id { get; } = Guid.NewGuid().ToString();
+}
 
 #endregion
 
@@ -107,13 +110,24 @@ public sealed class InterceptedRequestHandler<TRequest, TResponse> : IRequestHan
 }
 
 /// <summary>
-/// Marker interface for keyed handler resolution.
+/// A request handler that wraps another handler and executes interceptors in a pipeline.
+/// This version is for requests that don't return a response (IRequest without TResponse).
 /// </summary>
-public interface IKeyedRequestHandler<TRequest, TResponse> : IRequestHandler<TRequest, TResponse>
-    where TRequest : IRequest<TResponse>
+public sealed class InterceptedRequestHandler<TRequest> : IRequestHandler<TRequest>
+    where TRequest : IRequest
 {
-}
+    private readonly Func<TRequest, Task<Result<Empty>>> _pipeline;
 
+    public InterceptedRequestHandler(Func<TRequest, Task<Result<Empty>>> pipeline)
+    {
+        _pipeline = pipeline;
+    }
+
+    public Task<Result<Empty>> Handle(TRequest request)
+    {
+        return _pipeline(request);
+    }
+}
 
 #endregion
 

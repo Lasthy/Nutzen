@@ -340,6 +340,9 @@ public class ServiceRegistrationGenerator : IIncrementalGenerator
         {
             var hasInterceptors = handler.Interceptors.Length > 0;
 
+            // Check if this is a handler with Empty response (implements IRequestHandler<TRequest>)
+            var isEmptyResponseHandler = handler.ResponseTypeName == "Nutzen.Empty";
+
             if (hasInterceptors)
             {
                 // Register interceptors
@@ -349,7 +352,7 @@ public class ServiceRegistrationGenerator : IIncrementalGenerator
                 foreach (var interceptor in distinctInterceptors)
                 {
                     sb.AppendLine($"        // Register interceptor: {interceptor.InterceptorTypeName}");
-                    sb.AppendLine($"        services.TryAddScoped<{interceptor.InterceptorTypeName}>();");
+                    sb.AppendLine($"        services.AddScoped<{interceptor.InterceptorTypeName}<{handler.RequestTypeName}, {handler.ResponseTypeName}>>();");
                 }
 
                 // Register handler as keyed service
@@ -373,7 +376,7 @@ public class ServiceRegistrationGenerator : IIncrementalGenerator
                 {
                     var interceptor = orderedInterceptors[i];
                     sb.AppendLine($"            // Interceptor: {interceptor.InterceptorTypeName} (Order: {interceptor.Order})");
-                    sb.AppendLine($"            var interceptor{i} = sp.GetRequiredService<{interceptor.InterceptorTypeName}>();");
+                    sb.AppendLine($"            var interceptor{i} = sp.GetRequiredService<{interceptor.InterceptorTypeName}<{handler.RequestTypeName}, {handler.ResponseTypeName}>>();");
                     sb.AppendLine($"            var previousPipeline{i} = pipeline;");
                     sb.AppendLine($"            pipeline = request => interceptor{i}.Intercept(request, previousPipeline{i});");
                     sb.AppendLine();
@@ -381,12 +384,46 @@ public class ServiceRegistrationGenerator : IIncrementalGenerator
 
                 sb.AppendLine($"            return new InterceptedRequestHandler<{handler.RequestTypeName}, {handler.ResponseTypeName}>(pipeline);");
                 sb.AppendLine("        });");
+
+                // Also register as IRequestHandler<TRequest> if response type is Empty
+                if (isEmptyResponseHandler)
+                {
+                    sb.AppendLine();
+                    sb.AppendLine($"        // Also register as IRequestHandler<TRequest> for convenience (using specialized InterceptedRequestHandler)");
+                    sb.AppendLine($"        services.AddScoped<IRequestHandler<{handler.RequestTypeName}>>(sp =>");
+                    sb.AppendLine("        {");
+                    sb.AppendLine($"            var innerHandler = sp.GetRequiredKeyedService<IRequestHandler<{handler.RequestTypeName}, Nutzen.Empty>>(\"_inner_{handler.FullTypeName}\");");
+                    sb.AppendLine($"            Func<{handler.RequestTypeName}, Task<Result<Nutzen.Empty>>> pipeline = innerHandler.Handle;");
+                    sb.AppendLine();
+
+                    // Wrap in reverse order so the first interceptor is outermost
+                    for (int i = orderedInterceptors.Length - 1; i >= 0; i--)
+                    {
+                        var interceptor = orderedInterceptors[i];
+                        sb.AppendLine($"            // Interceptor: {interceptor.InterceptorTypeName} (Order: {interceptor.Order})");
+                        sb.AppendLine($"            var interceptor{i} = sp.GetRequiredService<{interceptor.InterceptorTypeName}<{handler.RequestTypeName}, Nutzen.Empty>>();");
+                        sb.AppendLine($"            var previousPipeline{i} = pipeline;");
+                        sb.AppendLine($"            pipeline = request => interceptor{i}.Intercept(request, previousPipeline{i});");
+                        sb.AppendLine();
+                    }
+
+                    sb.AppendLine($"            return new InterceptedRequestHandler<{handler.RequestTypeName}>(pipeline);");
+                    sb.AppendLine("        });");
+                }
             }
             else
             {
                 // Register handler directly
                 sb.AppendLine($"        // Register handler {handler.ClassName} (no interceptors)");
                 sb.AppendLine($"        services.AddScoped<IRequestHandler<{handler.RequestTypeName}, {handler.ResponseTypeName}>, {handler.FullTypeName}>();");
+
+                // Also register as IRequestHandler<TRequest> if response type is Empty
+                if (isEmptyResponseHandler)
+                {
+                    sb.AppendLine($"        // Also register as IRequestHandler<TRequest> for convenience");
+                    sb.AppendLine($"        services.AddScoped<IRequestHandler<{handler.RequestTypeName}>>(sp =>");
+                    sb.AppendLine($"            (IRequestHandler<{handler.RequestTypeName}>)sp.GetRequiredService<IRequestHandler<{handler.RequestTypeName}, Nutzen.Empty>>());");
+                }
             }
 
             sb.AppendLine();
@@ -415,27 +452,18 @@ public class ServiceRegistrationGenerator : IIncrementalGenerator
         sb.AppendLine("    }");
         sb.AppendLine("}");
 
-        // Add TryAddScoped helper if needed
-        if (validRequestHandlers.Any(h => h.Interceptors.Length > 0))
-        {
-            sb.AppendLine();
-            sb.AppendLine("internal static class ServiceCollectionExtensions_TryAdd");
-            sb.AppendLine("{");
-            sb.AppendLine("    internal static void TryAddScoped<TService>(this IServiceCollection services) where TService : class");
-            sb.AppendLine("    {");
-            sb.AppendLine("        if (!services.Any(s => s.ServiceType == typeof(TService)))");
-            sb.AppendLine("        {");
-            sb.AppendLine("            services.AddScoped<TService>();");
-            sb.AppendLine("        }");
-            sb.AppendLine("    }");
-            sb.AppendLine("}");
-        }
-
         context.AddSource($"NutzenRegistration_{safeAssemblyName}.g.cs", SourceText.From(sb.ToString(), Encoding.UTF8));
     }
 
-    private sealed record InterceptorClassInfo(string ClassName, string Namespace, string FullTypeName, int DefaultOrder);
-    private sealed record InterceptorReference(string InterceptorTypeName, string AttributeTypeName, int Order);
+    private sealed record InterceptorClassInfo(
+        string ClassName, 
+        string Namespace, 
+        string FullTypeName, 
+        int DefaultOrder);
+    private sealed record InterceptorReference(
+        string InterceptorTypeName, 
+        string AttributeTypeName, 
+        int Order);
     private sealed record RequestHandlerClassInfo(
         string ClassName, 
         string Namespace, 
