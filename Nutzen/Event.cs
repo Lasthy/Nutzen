@@ -14,7 +14,7 @@ public interface IEvent
     string Id { get; }
 }
 
-public record Event : IEvent
+public record NEvent : IEvent
 {
     public string Id { get; } = Guid.NewGuid().ToString();
 }
@@ -30,13 +30,13 @@ public interface IEventBus
     Task Publish<TEvent>(TEvent @event) where TEvent : IEvent;
 }
 
-public class EventBus : IEventBus
+public class NEventBus : IEventBus
 {
-    private readonly ILogger<EventBus> _logger;
+    private readonly ILogger<NEventBus> _logger;
     private readonly IServiceProvider _serviceProvider;
     private readonly ConcurrentDictionary<Type, List<Type>> _handlers = new();
 
-    public EventBus(ILogger<EventBus> logger, IServiceProvider serviceProvider)
+    public NEventBus(ILogger<NEventBus> logger, IServiceProvider serviceProvider)
     {
         _logger = logger;
         _serviceProvider = serviceProvider;

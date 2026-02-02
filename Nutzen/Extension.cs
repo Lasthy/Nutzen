@@ -23,7 +23,7 @@ public static class Extension
     public static IServiceCollection AddNutzen(this IServiceCollection services)
     {
         services.AddScoped<IDispatcher, Dispatcher>();
-        services.AddScoped<IEventBus, EventBus>();
+        services.AddScoped<IEventBus, NEventBus>();
 
         return services;
     }

@@ -352,16 +352,16 @@ public class ServiceRegistrationGenerator : IIncrementalGenerator
                 foreach (var interceptor in distinctInterceptors)
                 {
                     sb.AppendLine($"        // Register interceptor: {interceptor.InterceptorTypeName}");
-                    sb.AppendLine($"        services.AddScoped<{interceptor.InterceptorTypeName}<{handler.RequestTypeName}, {handler.ResponseTypeName}>>();");
+                    sb.AppendLine($"        services.AddTransient<{interceptor.InterceptorTypeName}<{handler.RequestTypeName}, {handler.ResponseTypeName}>>();");
                 }
 
                 // Register handler as keyed service
                 sb.AppendLine();
                 sb.AppendLine($"        // Register handler {handler.ClassName} as keyed service (has interceptors)");
-                sb.AppendLine($"        services.AddKeyedScoped<IRequestHandler<{handler.RequestTypeName}, {handler.ResponseTypeName}>, {handler.FullTypeName}>(\"_inner_{handler.FullTypeName}\");");
+                sb.AppendLine($"        services.AddKeyedTransient<IRequestHandler<{handler.RequestTypeName}, {handler.ResponseTypeName}>, {handler.FullTypeName}>(\"_inner_{handler.FullTypeName}\");");
 
                 // Register the intercepted handler as the main handler
-                sb.AppendLine($"        services.AddScoped<IRequestHandler<{handler.RequestTypeName}, {handler.ResponseTypeName}>>(sp =>");
+                sb.AppendLine($"        services.AddTransient<IRequestHandler<{handler.RequestTypeName}, {handler.ResponseTypeName}>>(sp =>");
                 sb.AppendLine("        {");
                 sb.AppendLine($"            var innerHandler = sp.GetRequiredKeyedService<IRequestHandler<{handler.RequestTypeName}, {handler.ResponseTypeName}>>(\"_inner_{handler.FullTypeName}\");");
 
@@ -390,7 +390,7 @@ public class ServiceRegistrationGenerator : IIncrementalGenerator
                 {
                     sb.AppendLine();
                     sb.AppendLine($"        // Also register as IRequestHandler<TRequest> for convenience (using specialized InterceptedRequestHandler)");
-                    sb.AppendLine($"        services.AddScoped<IRequestHandler<{handler.RequestTypeName}>>(sp =>");
+                    sb.AppendLine($"        services.AddTransient<IRequestHandler<{handler.RequestTypeName}>>(sp =>");
                     sb.AppendLine("        {");
                     sb.AppendLine($"            var innerHandler = sp.GetRequiredKeyedService<IRequestHandler<{handler.RequestTypeName}, Nutzen.Empty>>(\"_inner_{handler.FullTypeName}\");");
                     sb.AppendLine($"            Func<{handler.RequestTypeName}, Task<Result<Nutzen.Empty>>> pipeline = innerHandler.Handle;");
@@ -415,13 +415,13 @@ public class ServiceRegistrationGenerator : IIncrementalGenerator
             {
                 // Register handler directly
                 sb.AppendLine($"        // Register handler {handler.ClassName} (no interceptors)");
-                sb.AppendLine($"        services.AddScoped<IRequestHandler<{handler.RequestTypeName}, {handler.ResponseTypeName}>, {handler.FullTypeName}>();");
+                sb.AppendLine($"        services.AddTransient<IRequestHandler<{handler.RequestTypeName}, {handler.ResponseTypeName}>, {handler.FullTypeName}>();");
 
                 // Also register as IRequestHandler<TRequest> if response type is Empty
                 if (isEmptyResponseHandler)
                 {
                     sb.AppendLine($"        // Also register as IRequestHandler<TRequest> for convenience");
-                    sb.AppendLine($"        services.AddScoped<IRequestHandler<{handler.RequestTypeName}>>(sp =>");
+                    sb.AppendLine($"        services.AddTransient<IRequestHandler<{handler.RequestTypeName}>>(sp =>");
                     sb.AppendLine($"            (IRequestHandler<{handler.RequestTypeName}>)sp.GetRequiredService<IRequestHandler<{handler.RequestTypeName}, Nutzen.Empty>>());");
                 }
             }
@@ -443,7 +443,7 @@ public class ServiceRegistrationGenerator : IIncrementalGenerator
             foreach (var (eventTypeName, interfaceTypeName) in handler.EventInterfaces)
             {
                 sb.AppendLine($"        // Register event handler {handler.ClassName} for {eventTypeName}");
-                sb.AppendLine($"        services.AddScoped<IEventHandler<{eventTypeName}>, {handler.FullTypeName}>();");
+                sb.AppendLine($"        services.AddTransient<IEventHandler<{eventTypeName}>, {handler.FullTypeName}>();");
             }
             sb.AppendLine();
         }

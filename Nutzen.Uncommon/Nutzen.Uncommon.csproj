@@ -1,0 +1,46 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+	  <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
+	  <LangVersion>latest</LangVersion>
+	  <Nullable>enable</Nullable>
+
+	  <!-- NuGet Package Metadata -->
+	  <PackageId>Nutzen.Uncommon</PackageId>
+	  <Version>0.0.4</Version>
+	  <Authors>Lasthy</Authors>
+	  <Description>A lightweight library for implementing the Unit of Work pattern with request/response handling, including Roslyn analyzers for compile-time validation.</Description>
+	  <PackageTags>unit-of-work;cqrs;request;handler;dispatcher;analyzers</PackageTags>
+	  <PackageReadmeFile>README.md</PackageReadmeFile>
+	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
+	  <RepositoryType>git</RepositoryType>
+
+	  <!-- Package Generation -->
+	  <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	  <PackageOutputPath>C:\Dev\.nuget</PackageOutputPath>
+  </PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Nutzen\Nutzen.csproj" />
+	</ItemGroup>
+
+	<!-- Analyzer Reference -->
+	<ItemGroup>
+		<ProjectReference Include="..\Analyzers\Nutzen.Analyzers.UnitOfWork\Nutzen.Analyzers.UnitOfWork\Nutzen.Analyzers.UnitOfWork.csproj"
+						  OutputItemType="Analyzer"
+						  ReferenceOutputAssembly="false" />
+	</ItemGroup>
+
+	<!-- Generator Reference -->
+	<ItemGroup>
+		<ProjectReference Include="..\Generators\Nutzen.Generators.ServiceRegistration\Nutzen.Generators.ServiceRegistration.csproj"
+						  OutputItemType="Analyzer"
+						  ReferenceOutputAssembly="false" />
+	</ItemGroup>
+
+	<!-- Include README in package -->
+	<ItemGroup>
+		<None Include="..\README.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
+
+</Project>

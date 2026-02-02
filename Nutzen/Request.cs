@@ -17,12 +17,12 @@ public interface IRequest : IRequest<Empty>
 
 }
 
-public record Request<TResponse> : IRequest<TResponse>
+public record NRequest<TResponse> : IRequest<TResponse>
 {
     public string Id { get; } = Guid.NewGuid().ToString();
 }
 
-public record Request : IRequest
+public record NRequest : IRequest
 {
     public string Id { get; } = Guid.NewGuid().ToString();
 }

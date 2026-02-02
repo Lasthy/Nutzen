@@ -97,7 +97,7 @@ namespace Nutzen.Analyzers.UnitOfWork
                 {
                     var baseList = SyntaxFactory.BaseList(
                         SyntaxFactory.SingletonSeparatedList<BaseTypeSyntax>(
-                            SyntaxFactory.SimpleBaseType(SyntaxFactory.ParseTypeName("Request"))));
+                            SyntaxFactory.SimpleBaseType(SyntaxFactory.ParseTypeName("NRequest"))));
                     var newRecordDecl = recordDecl.WithBaseList(baseList);
                     var newRoot = root.ReplaceNode(recordDecl, newRecordDecl);
                     return document.WithSyntaxRoot(newRoot);
@@ -118,7 +118,7 @@ namespace Nutzen.Analyzers.UnitOfWork
                 .WithBaseList(
                     SyntaxFactory.BaseList(
                         SyntaxFactory.SingletonSeparatedList<BaseTypeSyntax>(
-                            SyntaxFactory.SimpleBaseType(SyntaxFactory.ParseTypeName("Nutzen.Request")))))
+                            SyntaxFactory.SimpleBaseType(SyntaxFactory.ParseTypeName("NRequest")))))
                 .WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken))
                 .WithLeadingTrivia(SyntaxFactory.CarriageReturnLineFeed, SyntaxFactory.Whitespace("        "))
                 .WithTrailingTrivia(SyntaxFactory.CarriageReturnLineFeed);

@@ -16,8 +16,8 @@ namespace Nutzen.Analyzers.UnitOfWork
         private const string RequestAttributeFullName = "Nutzen.RequestAttribute";
         private const string HandlerAttributeName = "HandlerAttribute";
         private const string HandlerAttributeFullName = "Nutzen.HandlerAttribute";
-        private const string RequestBaseTypeName = "Request";
-        private const string RequestBaseTypeFullName = "Nutzen.Request";
+        private const string IRequestInterfaceName = "IRequest";
+        private const string IRequestInterfaceFullName = "Nutzen.IRequest";
         private const string IRequestHandlerInterfaceName = "IRequestHandler";
         private const string IRequestHandlerInterfaceFullName = "Nutzen.IRequestHandler";
 
@@ -40,11 +40,11 @@ namespace Nutzen.Analyzers.UnitOfWork
         private static readonly DiagnosticDescriptor MustHaveRequestRule = new DiagnosticDescriptor(
             MustHaveRequestDiagnosticId,
             "UnitOfWork class must have a Request inner record",
-            "Class '{0}' with UnitOfWorkAttribute must have an inner record with RequestAttribute inheriting from Request",
+            "Class '{0}' with UnitOfWorkAttribute must have an inner record with RequestAttribute implementing IRequest",
             Category,
             DiagnosticSeverity.Error,
             isEnabledByDefault: true,
-            description: "Classes decorated with UnitOfWorkAttribute must contain an inner record with RequestAttribute that inherits from Request.");
+            description: "Classes decorated with UnitOfWorkAttribute must contain an inner record with RequestAttribute that implements IRequest.");
 
         private static readonly DiagnosticDescriptor MustHaveHandlerRule = new DiagnosticDescriptor(
             MustHaveHandlerDiagnosticId,
@@ -84,9 +84,9 @@ namespace Nutzen.Analyzers.UnitOfWork
                 context.ReportDiagnostic(diagnostic);
             }
 
-            // Rule 2: Must have inner record with RequestAttribute inheriting from Request
+            // Rule 2: Must have inner record with RequestAttribute implementing IRequest
             var requestType = FindInnerTypeWithAttribute(namedTypeSymbol, RequestAttributeName, RequestAttributeFullName);
-            if (requestType == null || !InheritsFrom(requestType, RequestBaseTypeName, RequestBaseTypeFullName))
+            if (requestType == null || !ImplementsInterface(requestType, IRequestInterfaceName, IRequestInterfaceFullName))
             {
                 var diagnostic = Diagnostic.Create(MustHaveRequestRule, namedTypeSymbol.Locations[0], namedTypeSymbol.Name);
                 context.ReportDiagnostic(diagnostic);
@@ -112,22 +112,6 @@ namespace Nutzen.Analyzers.UnitOfWork
         {
             return containingType.GetTypeMembers()
                 .FirstOrDefault(member => HasAttribute(member, attributeName, attributeFullName));
-        }
-
-        private static bool InheritsFrom(INamedTypeSymbol symbol, string baseTypeName, string baseTypeFullName)
-        {
-            var baseType = symbol.BaseType;
-            while (baseType != null)
-            {
-                if (baseType.Name == baseTypeName || 
-                    baseType.ToDisplayString() == baseTypeFullName ||
-                    baseType.OriginalDefinition.ToDisplayString().StartsWith(baseTypeFullName))
-                {
-                    return true;
-                }
-                baseType = baseType.BaseType;
-            }
-            return false;
         }
 
         private static bool ImplementsInterface(INamedTypeSymbol symbol, string interfaceName, string interfaceFullName)

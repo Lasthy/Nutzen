@@ -15,16 +15,16 @@ public sealed class RetryInterceptorOptions
 
     /// <summary>
     /// The base delay between retry attempts.
-    /// Default is 1 second.
+    /// Default is 100 milliseconds.
     /// </summary>
-    public TimeSpan BaseDelay { get; set; } = TimeSpan.FromSeconds(1);
+    public TimeSpan BaseDelay { get; set; } = TimeSpan.FromMilliseconds(100);
 
     /// <summary>
     /// The maximum jitter to add to the delay between retries.
     /// A random value between 0 and this amount will be added to the base delay.
-    /// Default is 500 milliseconds.
+    /// Default is 300 milliseconds.
     /// </summary>
-    public TimeSpan MaxJitter { get; set; } = TimeSpan.FromMilliseconds(500);
+    public TimeSpan MaxJitter { get; set; } = TimeSpan.FromMilliseconds(300);
 
     /// <summary>
     /// Whether to use exponential backoff for retry delays.
@@ -35,9 +35,9 @@ public sealed class RetryInterceptorOptions
 
     /// <summary>
     /// The maximum delay between retries (caps exponential backoff).
-    /// Default is 30 seconds.
+    /// Default is 5 seconds.
     /// </summary>
-    public TimeSpan MaxDelay { get; set; } = TimeSpan.FromSeconds(30);
+    public TimeSpan MaxDelay { get; set; } = TimeSpan.FromSeconds(5);
 
     /// <summary>
     /// A predicate to determine if an exception should trigger a retry.
