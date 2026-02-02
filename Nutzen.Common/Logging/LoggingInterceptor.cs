@@ -13,7 +13,7 @@ namespace Nutzen.Common.Logging;
 /// This interceptor uses object-based signatures to support all request/response types.
 /// The generator will create proper typed wrappers for each handler.
 /// </remarks>
-[Interceptor(Order = 0)]
+[Interceptor(Order = int.MinValue)]
 public class LoggingInterceptor<TRequest, TResponse> : IRequestInterceptor<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {

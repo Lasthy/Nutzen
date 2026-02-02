@@ -43,15 +43,21 @@ public sealed class CacheCleanupHostedService : BackgroundService
                 if (stoppingToken.IsCancellationRequested)
                     break;
 
-                var removedCount = _cacheService.RemoveEntriesOlderThan(_options.MaxCacheAge);
+                // Remove entries that have passed their absolute expiration time
+                var expiredCount = _cacheService.RemoveExpiredEntries();
+                
+                // Also remove entries older than the max cache age (safety net)
+                var staleCount = _cacheService.RemoveEntriesOlderThan(_options.MaxCacheAge);
+                
+                var totalRemoved = expiredCount + staleCount;
 
-                if (removedCount > 0)
+                if (totalRemoved > 0)
                 {
-                    _logger.LogInformation("Cache cleanup completed. Removed {Count} stale entries.", removedCount);
+                    _logger.LogInformation("Cache cleanup completed. Removed {ExpiredCount} expired and {StaleCount} stale entries.", expiredCount, staleCount);
                 }
                 else
                 {
-                    _logger.LogDebug("Cache cleanup completed. No stale entries found.");
+                    _logger.LogDebug("Cache cleanup completed. No entries removed.");
                 }
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)

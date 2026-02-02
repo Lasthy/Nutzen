@@ -66,55 +66,46 @@ public class ServiceRegistrationGenerator : IIncrementalGenerator
         var classDecl = (ClassDeclarationSyntax)context.Node;
         var semanticModel = context.SemanticModel;
 
-        // Check if the class has the Interceptor attribute
-        foreach (var attributeList in classDecl.AttributeLists)
+        var classSymbol = semanticModel.GetDeclaredSymbol(classDecl);
+        if (classSymbol is null) return null;
+
+        // Check if the class has the Interceptor attribute using semantic model
+        foreach (var attr in classSymbol.GetAttributes())
         {
-            foreach (var attribute in attributeList.Attributes)
+            var attrTypeName = attr.AttributeClass?.ToDisplayString();
+            if (attrTypeName == "Nutzen.InterceptorAttribute")
             {
-                var attributeName = attribute.Name.ToString();
-                if (attributeName == "Interceptor" || attributeName == "InterceptorAttribute" ||
-                    attributeName == "Nutzen.Interceptor" || attributeName == "Nutzen.InterceptorAttribute")
+                // Get the order if specified (handles negative numbers correctly)
+                int order = 0;
+                foreach (var namedArg in attr.NamedArguments)
                 {
-                    var classSymbol = semanticModel.GetDeclaredSymbol(classDecl);
-                    if (classSymbol is null) continue;
-
-                    // Get the order if specified
-                    int order = 0;
-                    if (attribute.ArgumentList?.Arguments.Count > 0)
+                    if (namedArg.Key == "Order" && namedArg.Value.Value is int orderValue)
                     {
-                        foreach (var arg in attribute.ArgumentList.Arguments)
-                        {
-                            if (arg.NameEquals?.Name.ToString() == "Order" &&
-                                arg.Expression is LiteralExpressionSyntax literal &&
-                                literal.Token.Value is int orderValue)
-                            {
-                                order = orderValue;
-                            }
-                        }
+                        order = orderValue;
                     }
-
-                    // Get the number of type parameters for open generic typeof syntax
-                    int typeParameterCount = classSymbol.TypeParameters.Length;
-                    
-                    // Build the type name for typeof - use open generic syntax if generic
-                    string typeNameForTypeof;
-                    if (typeParameterCount > 0)
-                    {
-                        // For generic types, use open generic syntax: typeof(LoggingInterceptor<,>)
-                        var commas = new string(',', typeParameterCount - 1);
-                        typeNameForTypeof = $"{classSymbol.ContainingNamespace.ToDisplayString()}.{classSymbol.Name}<{commas}>";
-                    }
-                    else
-                    {
-                        typeNameForTypeof = classSymbol.ToDisplayString();
-                    }
-
-                    return new InterceptorClassInfo(
-                        classSymbol.Name,
-                        classSymbol.ContainingNamespace.ToDisplayString(),
-                        typeNameForTypeof,
-                        order);
                 }
+
+                // Get the number of type parameters for open generic typeof syntax
+                int typeParameterCount = classSymbol.TypeParameters.Length;
+                
+                // Build the type name for typeof - use open generic syntax if generic
+                string typeNameForTypeof;
+                if (typeParameterCount > 0)
+                {
+                    // For generic types, use open generic syntax: typeof(LoggingInterceptor<,>)
+                    var commas = new string(',', typeParameterCount - 1);
+                    typeNameForTypeof = $"{classSymbol.ContainingNamespace.ToDisplayString()}.{classSymbol.Name}<{commas}>";
+                }
+                else
+                {
+                    typeNameForTypeof = classSymbol.ToDisplayString();
+                }
+
+                return new InterceptorClassInfo(
+                    classSymbol.Name,
+                    classSymbol.ContainingNamespace.ToDisplayString(),
+                    typeNameForTypeof,
+                    order);
             }
         }
 
@@ -177,8 +168,30 @@ public class ServiceRegistrationGenerator : IIncrementalGenerator
                         
                         var interceptorFullName = attrType.ContainingNamespace.ToDisplayString() + "." + interceptorName;
 
-                        // Get order from attribute
-                        int order = 0;
+                        // First, try to get the default order from the interceptor class's [Interceptor] attribute
+                        int defaultOrder = 0;
+                        var interceptorClassSymbol = context.SemanticModel.Compilation.GetTypeByMetadataName(interceptorFullName + "`2");
+                        if (interceptorClassSymbol is not null)
+                        {
+                            foreach (var interceptorAttr in interceptorClassSymbol.GetAttributes())
+                            {
+                                var interceptorAttrName = interceptorAttr.AttributeClass?.ToDisplayString();
+                                if (interceptorAttrName == "Nutzen.InterceptorAttribute")
+                                {
+                                    foreach (var namedArg in interceptorAttr.NamedArguments)
+                                    {
+                                        if (namedArg.Key == "Order" && namedArg.Value.Value is int orderVal)
+                                        {
+                                            defaultOrder = orderVal;
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+
+                        // Check if order was explicitly specified on the handler's attribute (overrides default)
+                        int order = defaultOrder;
                         foreach (var namedArg in attr.NamedArguments)
                         {
                             if (namedArg.Key == "Order" && namedArg.Value.Value is int orderVal)

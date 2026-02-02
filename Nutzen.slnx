@@ -6,9 +6,13 @@
     <Project Path="Analyzers/Nutzen.Analyzers.UnitOfWork/Nutzen.Analyzers.UnitOfWork.Vsix/Nutzen.Analyzers.UnitOfWork.Vsix.csproj" />
     <Project Path="Analyzers/Nutzen.Analyzers.UnitOfWork/Nutzen.Analyzers.UnitOfWork/Nutzen.Analyzers.UnitOfWork.csproj" />
   </Folder>
+  <Folder Name="/Examples/">
+    <Project Path="Examples/Nutzen.WebAPI/Nutzen.WebAPI.csproj" Id="b9e8eecb-182d-4d72-a99b-15a69b90c96d" />
+  </Folder>
   <Folder Name="/Generators/">
     <Project Path="Generators/Nutzen.Generators.ServiceRegistration/Nutzen.Generators.ServiceRegistration.csproj" Id="5bfca639-a6a1-41bb-9cf0-54b5dbdbb248" />
   </Folder>
   <Project Path="Nutzen.Common/Nutzen.Common.csproj" Id="216d0305-7b7d-4490-bc4a-7c328d88adcb" />
+  <Project Path="Nutzen.Uncommon/Nutzen.Uncommon.csproj" Id="7e695b06-9387-43ec-8526-eede4180c3be" />
   <Project Path="Nutzen/Nutzen.csproj" />
 </Solution>

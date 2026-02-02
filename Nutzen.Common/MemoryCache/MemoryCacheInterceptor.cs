@@ -36,8 +36,10 @@ public class MemoryCacheInterceptor<TRequest, TResponse> : IRequestInterceptor<T
         TRequest request,
         Func<TRequest, Task<Result<TResponse>>> next)
     {
+        var requestType = typeof(TRequest);
         var cacheKey = _cacheService.GenerateCacheKey(request);
-        var requestName = typeof(TRequest).Name;
+        var requestName = requestType.Name;
+        var requestFullName = $"{(requestType.BaseType != null ? $"{requestType.BaseType.Name}." : "")}{requestName}";
         var requestId = request.Id;
 
         // Try to get from cache
@@ -45,12 +47,12 @@ public class MemoryCacheInterceptor<TRequest, TResponse> : IRequestInterceptor<T
         {
             _logger.LogInformation(
                 "[{RequestId}] Cache HIT for request '{RequestName}'. Cached at: {CachedAt}, Last accessed: {LastAccessed}",
-                requestId, requestName, metadata!.CachedAt, metadata.LastAccessedAt);
+                requestId, requestFullName, metadata!.CachedAt, metadata.LastAccessedAt);
 
             return cachedResult!;
         }
 
-        _logger.LogDebug("[{RequestId}] Cache MISS for request '{RequestName}'", requestId, requestName);
+        _logger.LogInformation("[{RequestId}] Cache MISS for request '{RequestName}'", requestId, requestFullName);
 
         // Execute the handler
         var result = await next(request);
@@ -60,8 +62,8 @@ public class MemoryCacheInterceptor<TRequest, TResponse> : IRequestInterceptor<T
         {
             _cacheService.Set(cacheKey, result, typeof(TRequest).FullName ?? requestName);
 
-            _logger.LogDebug("[{RequestId}] Cached successful response for request '{RequestName}'",
-                requestId, requestName);
+            _logger.LogInformation("[{RequestId}] Cached successful response for request '{RequestName}'",
+                requestId, requestFullName);
         }
 
         return result;

@@ -7,7 +7,7 @@
     
     <!-- NuGet Package Metadata -->
     <PackageId>Nutzen</PackageId>
-    <Version>0.0.4</Version>
+    <Version>0.0.6</Version>
     <Authors>Lasthy</Authors>
     <Description>A lightweight library for implementing the Unit of Work pattern with request/response handling, including Roslyn analyzers for compile-time validation.</Description>
     <PackageTags>unit-of-work;cqrs;request;handler;dispatcher;analyzers</PackageTags>

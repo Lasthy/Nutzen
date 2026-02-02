@@ -37,6 +37,17 @@ public sealed class CacheManagementService : ICacheManagementService
     {
         if (_memoryCache.TryGetValue(key, out value) && _cacheMetadata.TryGetValue(key, out metadata))
         {
+            // Validate that the entry hasn't expired
+            if (metadata.AbsoluteExpiration.HasValue && metadata.AbsoluteExpiration.Value <= DateTimeOffset.UtcNow)
+            {
+                // Entry has expired, remove it
+                _memoryCache.Remove(key);
+                _cacheMetadata.TryRemove(key, out _);
+                value = default;
+                metadata = null;
+                return false;
+            }
+
             metadata.LastAccessedAt = DateTimeOffset.UtcNow;
             return true;
         }
@@ -176,15 +187,68 @@ public sealed class CacheManagementService : ICacheManagementService
     }
 
     /// <inheritdoc />
+    public int RemoveExpiredEntries()
+    {
+        var now = DateTimeOffset.UtcNow;
+        var keysToRemove = _cacheMetadata
+            .Where(kvp => kvp.Value.AbsoluteExpiration.HasValue && kvp.Value.AbsoluteExpiration.Value <= now)
+            .Select(kvp => kvp.Key)
+            .ToList();
+
+        foreach (var key in keysToRemove)
+        {
+            _memoryCache.Remove(key);
+            _cacheMetadata.TryRemove(key, out _);
+        }
+
+        if (keysToRemove.Count > 0)
+        {
+            _logger.LogInformation("Removed {Count} expired cache entries", keysToRemove.Count);
+        }
+
+        return keysToRemove.Count;
+    }
+
+    /// <inheritdoc />
     public string GenerateCacheKey<TRequest>(TRequest request)
     {
         var requestType = typeof(TRequest).FullName ?? typeof(TRequest).Name;
-        var serialized = JsonSerializer.Serialize(request);
+        var serialized = JsonSerializer.Serialize(request, CacheKeySerializerOptions);
         
         using var sha256 = SHA256.Create();
         var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(serialized));
         var hash = Convert.ToBase64String(hashBytes);
 
         return $"{requestType}:{hash}";
+    }
+
+    private static readonly JsonSerializerOptions CacheKeySerializerOptions = CreateCacheKeySerializerOptions();
+
+    private static JsonSerializerOptions CreateCacheKeySerializerOptions()
+    {
+        var options = new JsonSerializerOptions
+        {
+            TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver
+            {
+                Modifiers =
+                {
+                    static typeInfo =>
+                    {
+                        if (typeInfo.Kind != System.Text.Json.Serialization.Metadata.JsonTypeInfoKind.Object)
+                            return;
+
+                        foreach (var property in typeInfo.Properties)
+                        {
+                            // Exclude the Id property from cache key generation since each request has a unique Id
+                            if (property.Name.Equals("Id", StringComparison.OrdinalIgnoreCase))
+                            {
+                                property.ShouldSerialize = static (_, _) => false;
+                            }
+                        }
+                    }
+                }
+            }
+        };
+        return options;
     }
 }

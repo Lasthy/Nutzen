@@ -11,6 +11,11 @@ public static class Extension
 {
     public static IServiceCollection AddNutzenCommon(this IServiceCollection services)
     {
+        services.AddMemoryCache();
+
+        services.AddScoped<ICacheManagementService, CacheManagementService>();
+        services.AddHostedService<CacheCleanupHostedService>();
+
         services.AddMemoryCacheInterceptor();
         services.AddRetryInterceptor();
 

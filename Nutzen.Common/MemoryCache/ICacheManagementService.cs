@@ -39,9 +39,14 @@ public interface ICacheManagementService
     IReadOnlyCollection<CacheEntryMetadata> GetAllMetadata();
 
     /// <summary>
-    /// Removes entries older than the specified age.
+    /// Removes entries older than the specified age based on when they were cached.
     /// </summary>
     int RemoveEntriesOlderThan(TimeSpan maxAge);
+
+    /// <summary>
+    /// Removes entries that have passed their absolute expiration time.
+    /// </summary>
+    int RemoveExpiredEntries();
 
     /// <summary>
     /// Generates a cache key for the given request.
